@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BurriCart Admin</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;background:#f3f4f6;color:#111827}
+    header{padding:16px 24px;background:#113d00;color:#fff;display:flex;justify-content:space-between;align-items:center}
+    main{padding:24px}
+    table{width:100%;border-collapse:collapse;background:#fff}
+    th,td{border:1px solid #e5e7eb;padding:10px;text-align:left}
+    th{background:#f9fafb}
+    button{background:#113d00;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BurriCart Admin Dashboard</h1>
+    <div>
+      <button onclick="window.location.href='/'">Storefront</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </header>
+  <main>
+    <h2>Recent Orders</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Address</th>
+          <th>Items</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+  </main>
+  <script>
+    async function loadOrders(){
+      const response = await fetch('/api/admin/orders', { credentials: 'same-origin' });
+      if(!response.ok){
+        alert('Admin login required.');
+        window.location.href = '/';
+        return;
+      }
+      const data = await response.json();
+      const tbody = document.getElementById('ordersBody');
+      tbody.innerHTML = '';
+      data.orders.forEach(order => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${new Date(order.createdAt).toLocaleString()}</td>
+          <td>${order.fullName}</td>
+          <td>${order.email}</td>
+          <td>${order.address}</td>
+          <td>${(order.items || []).join(', ')}</td>
+          <td>₱${Number(order.total || 0).toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function logout(){
+      await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      window.location.href = '/';
+    }
+
+    loadOrders();
+  </script>
+  <script>
+    async function checkAdmin(){
+
+      const res = await fetch("/auth/me", { credentials: "same-origin" });
+      const data = await res.json();
+
+      if(!data.user || data.user.role !== "admin"){
+        alert("Admin access only");
+        window.location.href = "/";
+      }
+
+    }
+
+    checkAdmin();
+</script>
+</body>
+</html>
